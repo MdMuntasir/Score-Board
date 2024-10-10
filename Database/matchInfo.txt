@@ -1,1 +1,1 @@
-BAN,IND,IND,40,0,6,2,Wd,
+BAN,IND,IND,0,0,0,0,0,Tamim,0,Liton,0,0,Dhoni,1,150,1,
