@@ -1,1 +1,1 @@
-BAN,IND,IND,0,0,0,0,0,Tamim,0,Liton,0,0,Dhoni,1,150,1,
+IND,BAN,BAN,4,0,0,1,4,saitama,4,gohan,0,0,mash,2,40,0,1,IND,

@@ -6,9 +6,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <windows.h>
 
 int changed = 1;
-int match = 0;
+int match = 0, finished = 0;
+
 int runs = 0;
 int wickets = 0;
 int overs = 0;
@@ -17,12 +19,25 @@ char ball_array[20][5];
 int over_index = 0;
 char last_ball[5] = "", team1[5] = "", team2[5] = "", batting[5] = "";
 char bat1[20] = "", bat2[20] = "", bowler[20] = "";
+char winner[5] = "";
 int run1 = 4, run2 = 1;
 int innings = 1;
 int target = 0;
 int strike = 0;
 float rr = 0;
 
+bool windows = true;
+
+
+
+//Checks the operating system
+void opChecker(){
+#ifdef _WIN32
+    windows = true;
+#else
+    windows = false;
+#endif
+}
 
 
 
@@ -39,11 +54,7 @@ void clear_over(){
 
 // Clears the screen 
 void clear_screen(){
-#ifdef _WIN32
-    system("cls");
-#else
-    system("clear");
-#endif
+    windows ? system("cls") : system("clear");
 }
 
 
@@ -64,7 +75,7 @@ char* curdir(){
 
 // Retrive data from the text and save in the variables
 int reader(char* text){
-    char data[16][20];
+    char data[20][20];
     char temp[20] = "";
     int c = 0;
     int temp_idx = 0;
@@ -90,7 +101,7 @@ int reader(char* text){
         atoi(data[6]) == balls && strcmp(data[7], last_ball) == 0 && strcmp(data[8], bat1) == 0
         && atoi(data[9]) == run1 && strcmp(data[10], bat2) == 0 && atoi(data[11]) == run2 &&
         atoi(data[12]) == strike && strcmp(bowler, data[13]) == 0 && atoi(data[14]) == innings 
-        && atoi(data[15]) == target && match == atoi(data[16])){
+        && atoi(data[15]) == target && match == atoi(data[16]) && finished == atoi(data[17]) && strcmp(winner, data[18]) == 0){
         return 0;
     }
 
@@ -114,7 +125,8 @@ int reader(char* text){
         innings = atoi(data[14]);
         target = atoi(data[15]);
         match = atoi(data[16]);
-
+        finished = atoi(data[17]);
+        strcpy(winner,data[18]);
 
         return 1;
     }
@@ -124,32 +136,22 @@ int reader(char* text){
 
 // Reads the database text file and retrive data 
 void GetInfo(char* path){
-    FILE *file;
-    char* content;
+    FILE *file = fopen(path,"r");
+    char content[100];
 
-    file = fopen(path,"r");
-    
-    fseek(file, 0, SEEK_END);
-    
-    long file_size = ftell(file);
-    
-    rewind(file);
-
-    content = (char *)malloc(sizeof(char) * (file_size + 1));  
+    fgets(content, sizeof(content), file);
     
     if (content == NULL) {
         perror("Memory error");
         fclose(file);
     }
 
-    fread(content, sizeof(char), file_size, file);
+    else{
 
-    content[file_size] = '\0';
+        changed = reader(content);
+        fclose(file);
+    }
 
-
-    changed = reader(content);
-    fclose(file);
-    free(content);
 }
 
 
@@ -357,9 +359,11 @@ void ScoreBoard(){
 
 
 int main(){
+    opChecker();
     struct stat buffer;
     char* db_dir = curdir();
-    char db_path[] = "\\Database\\matchInfo.txt";
+    char db_path[50];
+    windows ? strcpy(db_path,"\\Database\\matchInfo.txt") : strcpy(db_path,"/Database/matchInfo.txt");
     strcat(db_dir,db_path);
     
     bool db_found = stat(db_dir, &buffer) == 0;
@@ -367,6 +371,7 @@ int main(){
     if(db_found){
         while(1){
             GetInfo(db_dir);
+
             if(changed){
                 clear_screen();
 
@@ -383,6 +388,8 @@ int main(){
 
                 if(match)
                     ScoreBoard();
+                else if(finished)
+                    strcmp(winner,"Draw") != 0 ? printf("________%s Won The Match________", winner) : printf("________Match Draw________");
                 else
                     printf("No Match Started Yet");
                 changed = 0;
