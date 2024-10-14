@@ -103,7 +103,7 @@ char* fileReader(char* path){
 
 // Returns the formated string from variable
 char* TextFormat(){
-    char *text = (char*)malloc(50 * sizeof(char));
+    char *text = (char*)malloc(100 * sizeof(char));
     char tmp[20];
     strcpy(text,team1);strcat(text,",");
     strcat(text,team2); strcat(text,",");
@@ -141,15 +141,7 @@ void SaveFile(char* path, char* text){
         return;
     }
 
-    // HANDLE hFile = (HANDLE)_get_osfhandle(_fileno(file));
-
-    // if (LockFile(hFile, 0, 0, 1, 0)) {  
-        
-    //     UnlockFile(hFile, 0, 0, 1, 0);  
-    //     saved = 1;
-    // } else {
-    //     saved = 0;
-    // }
+    puts(text);
 
     fprintf(file,"%s",text);
     

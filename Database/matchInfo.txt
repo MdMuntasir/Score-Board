@@ -1,1 +1,1 @@
-IND,BAN,BAN,4,0,0,1,4,saitama,4,gohan,0,0,mash,2,40,0,1,IND,
+BAN,IND,BAN,0,0,0,0,0,Kohli,0,Dhoni,0,0,Sakib,2,41,0,1,Draw,
