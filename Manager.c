@@ -21,8 +21,8 @@ int runs = 0;
 int wickets = 0;
 int overs = 0, total_over=0;
 int balls = 0;
-char last_ball[5] = " ", team1[5] = "BAN", team2[5] = "IND", batting[5] = "BAN";
-char bat1[20] = "Tamim", bat2[20] = "Liton", bowler[20] = "Bumrah";
+char last_ball[5] = "", team1[5] = "", team2[5] = "", batting[5] = "";
+char bat1[20] = "", bat2[20] = "", bowler[20] = "";
 char winner[5]="";
 int run1 = 0, run2 = 0;
 int innings = 1;
@@ -196,7 +196,7 @@ int isValidNumber(char* number){
         if(!isdigit(number[i])) return 0;
         i++;
     }
-    return 1;
+    return i<15? 1 : 0;
 }
 
 

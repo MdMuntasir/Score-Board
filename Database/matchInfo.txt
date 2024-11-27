@@ -1,1 +1,1 @@
-IND,BAN,BAN,0,0,0,0,W,Dhoni,0,Gobor,0,0,Sakib,2,63,0,1,BAN,
+BAN,IND,BAN,12,1,0,5,W,Soumya,0,Liton,6,1,Ashwin,0,0,1,0,,
