@@ -37,6 +37,16 @@ char db_path[100] = "";
 bool windows = true;
 
 
+typedef struct {
+    char email[50];
+    char username[50];
+    char number[20];
+    char password[20];
+} User;
+
+
+User loggedUser;
+
 
 //Checks the operating system
 void opChecker(){
@@ -90,11 +100,40 @@ void strUpper(char* str){
 }
 
 
+void strlower(char* str){
+    for(int i = 0; str[i] != '\0'; i++){
+        str[i] = tolower(str[i]);
+    }
+}
+
+
+// Reads user information from a string
+void readUserInfo(User *user, char* text){
+    int i = 0, indx = 0;
+    char temp[50] = "";
+    for(int j=0; j<strlen(text); j++){
+        if(text[j] == ','){
+            temp[indx] = '\0'; 
+            if (i == 0) strcpy(user->email,temp);
+            else if (i == 1) strcpy(user->password,temp);
+            else if (i == 2) strcpy(user->username,temp);
+            else if (i == 3) strcpy(user->number,temp);
+            i++; indx = 0;strcpy(temp,"");
+            continue;
+        }
+        temp[indx++] = text[j];
+        
+    }
+
+}
+
+
+
 // Reads text from a file
 char* fileReader(char* path){
     FILE *file = fopen(path,"r");
-    char *content = (char *)malloc(20 * sizeof(char));
-    fgets(content,20,file);
+    char *content = (char *)malloc(200 * sizeof(char));
+    fgets(content,200,file);
     fclose(file);
     return content;
 }
@@ -150,18 +189,70 @@ void SaveFile(char* path, char* text){
 }
 
 
+// Checks if the number is valid
+int isValidNumber(char* number){
+    int i = 0;
+    while(number[i] != '\0'){
+        if(!isdigit(number[i])) return 0;
+        i++;
+    }
+    return 1;
+}
+
+
+// Checks if the email is valid
+int isValidEmail(char* email){
+    int i = 0, at = 0, dot = 0, atIndx = -1, dotIndx = -1;
+    while(email[i] != '\0'){
+        if(email[i] == '@') {at++; atIndx = i;}
+        if(email[i] == '.') {dot++; dotIndx = i;}
+        i++;
+    }
+
+    return (at == 1 && dot >= 1  && dot <= 2 && dotIndx > atIndx && dotIndx<i-1 )? 1 : 0;
+}
+
+
+
+// Checks if the number is strong enough
+int strongPassword(const char *password) {
+    int upper = 0, lower = 0, digit = 0, special = 0;
+    if(strlen(password) < 8) {
+        return 0; 
+    }
+
+    for(int i = 0; password[i] != '\0'; i++) {
+        if(isupper(password[i])) upper = 1;
+        if(islower(password[i])) lower = 1;
+        if(isdigit(password[i])) digit = 1;
+        if(ispunct(password[i])) special = 1;
+    }
+
+    return upper && lower && digit && special; 
+}
+
+
+
 // Get password input in an obsecure form
-void getPassword(char* txt,char* password, int max_length) {
+void getPassword(char* txt, char* password, int max_length) {
     int i = 0;
     char ch;
 
     printf("%s",txt);
     while (i < max_length - 1) { 
         ch = getch();
-        if(ch == '\r')
-            break;
-        password[i++] = ch;
-        // printf("*"); 
+        if(ch == '\r' || ch == '\n')  break; 
+
+        else if (ch == '\b') { 
+            if (i > 0) {
+                i--;
+                printf("\b \b"); 
+            }
+        } 
+        else if (isprint(ch)) { 
+            password[i++] = ch;
+            printf("*"); 
+        }
     }
     password[i] = '\0'; 
     printf("\n");
@@ -235,7 +326,7 @@ void homeScreen(){
 
 void logScreen(){
     struct stat buffer;
-    char username[50] = "dummy", password[50];
+    char email[50], password[50];
 
     if(error){
         int option;
@@ -249,29 +340,32 @@ void logScreen(){
             screen = 0;
             changed = 1;
         }
-
     }
 
     else{
-        printf("Log In\nEnter Username: ");getchar();
-        fgets(username, 50, stdin);
-        username[strlen(username)-1] = '\0';
+        printf("Log In\nEnter email: ");getchar();
+        fgets(email, 50, stdin);
+        email[strlen(email)-1] = '\0';
+        strlower(email);
 
 
         getPassword("Enter password: ",password,15);
 
-        strcat(username,".txt");
-        char* user = curdir();
+        strcat(email,".txt");
+        char* usermail = curdir();
         char file_dir[50];
         windows ? strcpy(file_dir,"\\Database\\Auth_Credential\\") : strcpy(file_dir,"/Database/Auth_Credential/");
-        strcat(user,file_dir);strcat(user,username);
+        strcat(usermail,file_dir);strcat(usermail,email);
 
-        bool user_found = stat(user, &buffer) == 0;
+        bool user_found = stat(usermail, &buffer) == 0;
 
         if(user_found){
-            char* pass = fileReader(user);
-            if(strcmp(pass,password) == 0){
-                strcpy(error_mssg,"Successfully logged in!!!");
+            char* content = fileReader(usermail);
+            User user;
+            readUserInfo(&user,content);
+            if(strcmp(user.password,password) == 0){
+                strcpy(error_mssg," Successfully logged in!!!");
+                loggedUser = user;
                 error = true;
                 screen = 3;
             }
@@ -289,11 +383,10 @@ void logScreen(){
 }
 
 
-
-
 void regScreen(){
     struct stat buffer;
-    char username[50]="", password[50], confirm_password[50];
+    User user;
+    char confirm_password[50];
 
     if(error){
         int option;
@@ -311,41 +404,127 @@ void regScreen(){
 
     else{
 
-        printf("Sign Up\nEnter Username: "); getchar();
-        fgets(username, 50, stdin);
-        username[strlen(username)-1] = '\0';
-
-        getPassword("Enter password: ",password,15);
-        getPassword("Confirm password: ",confirm_password,15);
-
-
-        strcat(username,".txt");
-        char* user = curdir();
+        char* usermail = curdir();
         char file_dir[50];
         windows ? strcpy(file_dir,"\\Database\\Auth_Credential\\") : strcpy(file_dir,"/Database/Auth_Credential/");
-        strcat(user,file_dir);strcat(user,username);
 
-        bool user_found = stat(user, &buffer) == 0;
+        
+        printf("Sign Up\nEnter Email: "); getchar();
+        fgets(user.email, 50, stdin);
+        user.email[strlen(user.email)-1] = '\0';
 
-        if(strcmp(confirm_password,password) != 0){
-            strcpy(error_mssg,"Password didn't match"); error = true;
+        while(!isValidEmail(user.email)){
+            printf("Invalid Email. Enter valid email: ");
+            fgets(user.email, 50, stdin);
+            user.email[strlen(user.email)-1] = '\0';
         }
-        else if(strlen(password)<8 ){
-            strcpy(error_mssg,"Weak password!. Password must contain at least 8 characters."); error = true;
+
+        char filename[50]; strcpy(filename,user.email); strcat(filename,".txt");
+        strcat(usermail,file_dir);strcat(usermail,filename);
+
+        while(stat(usermail, &buffer) == 0){
+            printf("Email already exists. Try login or use different email: ");
+            fgets(user.email, 50, stdin);
+            user.email[strlen(user.email)-1] = '\0';
+            strcpy(filename,user.email); strcat(filename,".txt");
+            strcpy(usermail,curdir()); strcat(usermail,file_dir);strcat(usermail,filename);
         }
-        else if(user_found){
-            strcpy(error_mssg,"Username already exists. Try login or use different username."); error = true;
+
+
+        printf("Enter Username: "); 
+        fgets(user.username, 50, stdin);
+        user.username[strlen(user.username)-1] = '\0';
+
+
+        printf("Enter Number: ");
+        fgets(user.number, 20, stdin);
+        user.number[strlen(user.number)-1] = '\0';
+        while(!isValidNumber(user.number)){
+            printf("Invalid Number. Enter valid number: ");
+            fgets(user.number, 20, stdin);
+            user.number[strlen(user.number)-1] = '\0';
         }
-        else{
-            puts(user);
-            FILE *file = fopen(user,"w");
-            if(file == NULL)perror("Error opening: ");
-            fprintf(file, "%s" ,password);
-            fclose(file);
-            strcpy(error_mssg,"Successfully created account. Now log in to your account."); error = true;
-            screen = 1;
+
+        printf("Password must contain uppercase, lowercase, digit and special charecters and a minimum length of 8 charecters.\n");
+        getPassword("Enter password: ",user.password,15);
+        while(!strongPassword(user.password)){
+            char mssg[] = "Weak password!. Password must contain uppercase, lowercase, digit and special charecters and a minimum length of 8 charecters.";
+            printf("%s\n",mssg);
+            getPassword("Enter password: ",user.password,15);
         }
+        getPassword("Confirm password: ",confirm_password,15);
+        while(strcmp(confirm_password, user.password) != 0){
+            printf("Password didn't match. Try again\n");
+            getPassword("Enter password: ",user.password,15);
+            while(!strongPassword(user.password)){
+                char mssg[] = "Weak password!. Password must contain uppercase, lowercase, digit and special charecters and a minimum length of 8 charecters.";
+                printf("%s\n",mssg);
+                getPassword("Enter password: ",user.password,15);
+            }
+            getPassword("Confirm password: ",confirm_password,15);
+        }
+
+        char info[100];
+        strcpy(info,user.email);strcat(info,",");
+        strcat(info,user.password);strcat(info,",");
+        strcat(info,user.username);strcat(info,",");
+        strcat(info,user.number);strcat(info,",");
+        
+        FILE *file = fopen(usermail,"w");
+        if(file == NULL)printf("Directory not found\n");
+        fprintf(file, "%s" , info);
+        fclose(file);
+        strcpy(error_mssg,"Successfully created account. Now log in to your account."); error = true;
+        screen = 1;
+
     }
+    changed = 1;
+}
+
+
+
+void loggedUserScreen(){
+    if(error){
+        int option;
+        printf("%s\n",error_mssg); error = !error;
+    }
+
+
+    int option;
+    printf("1. Set Match\n2. View Profile\n3. Log Out\nChoose an option: ");
+    scanf("%d",&option);getchar();
+
+    if(option == 1){
+        printf("Match set successfully\n");
+        screen = 5;
+        changed = 1;
+    }
+
+    else if(option == 2){
+        screen = 4;
+        changed = 1;
+    }
+
+    else if(option == 3){
+        strcpy(error_mssg,"Successfully logged out");
+        screen = 0;
+        changed = 1;
+    }
+
+    else{
+        strcpy(error_mssg,"Invalid option");
+    }
+    
+}
+
+
+
+void viewProfileScreen(){
+    printf("Email: %s\nUsername: %s\nNumber: %s\n",loggedUser.email,loggedUser.username,loggedUser.number);
+    char ch;
+    printf("Press enter to go back: ");
+    ch = getchar();
+    screen = 3;
     changed = 1;
 }
 
@@ -400,7 +579,7 @@ void setMatchScreen(){
     if(!(option-1)){
         strcpy(error_mssg,"\tMatch Started");
         match = 1;
-        screen = 4;
+        screen = 6;
     }
 
     changed = 1;
@@ -632,11 +811,7 @@ int main(){
 
 
     while(1){
-        if(!saved){
-            SaveFile(db_path,TextFormat());
-        }
-        
-        if(saved && changed){
+        if(changed){
             changed = 0;
             clear_screen();
 
@@ -654,10 +829,18 @@ int main(){
                 break;
 
                 case(3):
-                setMatchScreen();
+                loggedUserScreen();
                 break;
 
                 case(4):
+                viewProfileScreen();
+                break;
+
+                case(5):
+                setMatchScreen();
+                break;
+
+                case(6):
                 runningMatchScreen();
                 break;
 
