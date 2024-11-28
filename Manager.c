@@ -196,7 +196,7 @@ int isValidNumber(char* number){
         if(!isdigit(number[i])) return 0;
         i++;
     }
-    return i<15? 1 : 0;
+    return i<15 && i>6? 1 : 0;
 }
 
 
