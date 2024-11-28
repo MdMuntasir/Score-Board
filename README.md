@@ -1,5 +1,5 @@
 <h2>Cricket Scoreboard</h2>
-This is my first academic project. This project has two programs, one shows the scoreboard when the other one is used to control the match.
+This is my first academic capstone project. This project has two programs, one shows the scoreboard while the other one is used to control the match.
 <h3>Manager</h3>
 Manager program has a authentication system which is required to start and operate a match. After login you have to enter necessary information to start the match. Now you just have to enter the scores in every ball to see results in scoreboard.
 

@@ -51,7 +51,6 @@ void clear_over(){
 
 
 
-
 // Clears the screen 
 void clear_screen(){
     windows ? system("cls") : system("clear");
